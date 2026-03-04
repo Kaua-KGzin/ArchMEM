@@ -1,0 +1,20 @@
+﻿# Build artifacts
+memory_sim
+memory_sim.exe
+*.o
+*.obj
+*.out
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Debug artifacts
+*.dSYM/
+*.stackdump
+
+# IDE
+.vs/
+.vscode/
+*.user
+*.suo
