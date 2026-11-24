@@ -17,7 +17,7 @@ jobs:
         include:
           - { os: ubuntu-latest, name: linux-amd64, cc: gcc, ext: "" }
           - { os: ubuntu-24.04-arm, name: linux-arm64, cc: gcc, ext: "" }
-          - { os: macos-13, name: darwin-amd64, cc: clang, ext: "" }
+          - { os: macos-15-intel, name: darwin-amd64, cc: clang, ext: "" }
           - { os: macos-latest, name: darwin-arm64, cc: clang, ext: "" }
           - { os: windows-latest, name: windows-amd64, cc: gcc, ext: ".exe" }
     defaults:

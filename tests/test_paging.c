@@ -149,6 +149,19 @@ static void test_tlb_invalidated_on_evict(void) {
     json_free(v);
 }
 
+/* A fault must invalidate the victim's TLB entry before the new page is
+ * cached, like a real MMU: here step 5 (page 2, still resident) is a TLB hit. */
+static void test_tlb_refill_after_eviction(void) {
+    char err[160];
+    Totals t;
+    JVal *v = sim(ALG_FIFO, 2, 16, 64, 2, "1 2 1 3 2", &t, err);
+    const JVal *tlb4 = json_get(step(v, 4), "tlb_pages");
+    CHECK_EQ_INT(json_len(tlb4), 2); /* {2, 3}: page 1 left with its frame */
+    CHECK_EQ_STR(json_str(json_get(step(v, 5), "tlb"), ""), "hit");
+    CHECK_EQ_INT(t.tlb_hits, 2);
+    json_free(v);
+}
+
 static void test_out_of_range(void) {
     char err[160] = "";
     Totals t;
@@ -188,6 +201,7 @@ int main(void) {
     RUN(test_address_decomposition);
     RUN(test_tlb_hits_and_invalidation);
     RUN(test_tlb_invalidated_on_evict);
+    RUN(test_tlb_refill_after_eviction);
     RUN(test_out_of_range);
     RUN(test_config_limits);
     return test_summary();

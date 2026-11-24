@@ -2,6 +2,7 @@
 import { alertBox, clear, h, pct } from "../dom";
 import type { Engine } from "../engine";
 import { ALG_LABEL, ALG_RULE, explain } from "../i18n";
+import { stepLimitError, stripWindow } from "../limits";
 import { hashParam, scenario } from "../state";
 import { timeline, type Timeline } from "../timeline";
 import type { RunResponse, Scenario, Step } from "../types";
@@ -121,11 +122,14 @@ function pageTablePanel(s: Step, r: RunResponse, seen: number[]): HTMLElement {
 }
 
 function refStrip(r: RunResponse, index: number, onPick: (i: number) => void): HTMLElement {
+  const { from, to } = stripWindow(r.steps.length, index);
   return h(
     "ol",
-    { class: "refstrip", "aria-label": "Sequência de acessos" },
-    ...r.steps.map((s, i) =>
-      h(
+    { class: "refstrip", "aria-label": "Sequência de acessos", start: from + 1 },
+    from > 0 ? h("li", { class: "muted", "aria-hidden": "true" }, "…") : null,
+    ...r.steps.slice(from, to).map((s, j) => {
+      const i = from + j;
+      return h(
         "li",
         {},
         h(
@@ -139,15 +143,29 @@ function refStrip(r: RunResponse, index: number, onPick: (i: number) => void): H
           `${s.page}${s.op === "W" ? "w" : ""}`,
           i <= index ? h("span", { class: "mark", "aria-hidden": "true" }, s.result === "hit" ? "✓" : "✗") : null,
         ),
-      ),
-    ),
+      );
+    }),
+    to < r.steps.length ? h("li", { class: "muted", "aria-hidden": "true" }, "…") : null,
   );
 }
 
-function runningTotals(r: RunResponse, index: number): HTMLElement {
-  const done = r.steps.slice(0, index + 1);
-  const faults = done.filter((s) => s.result === "fault").length;
-  const writebacks = done.filter((s) => s.victim?.dirty).length;
+/** Faults and write-backs after each step, computed once per simulation. */
+function prefixTotals(r: RunResponse): { faults: number[]; writebacks: number[] } {
+  const faults: number[] = [], writebacks: number[] = [];
+  let f = 0, w = 0;
+  for (const s of r.steps) {
+    if (s.result === "fault") f++;
+    if (s.victim?.dirty) w++;
+    faults.push(f);
+    writebacks.push(w);
+  }
+  return { faults, writebacks };
+}
+
+function runningTotals(r: RunResponse, sums: ReturnType<typeof prefixTotals>, index: number): HTMLElement {
+  const done = { length: index + 1 };
+  const faults = sums.faults[index];
+  const writebacks = sums.writebacks[index];
   const stat = (label: string, value: string, cls = "") => h("div", { class: `stat ${cls}` }, h("span", { class: "stat-v" }, value), h("span", { class: "stat-l" }, label));
   return h(
     "div",
@@ -171,12 +189,18 @@ export function pagingView(engine: Engine): View {
     tl?.destroy();
     tl = null;
     clear(out);
+    const tooLong = stepLimitError(s.refs);
+    if (tooLong) {
+      out.append(alertBox(tooLong));
+      return;
+    }
     const res = engine.run<RunResponse>({ action: "run", config: s.config, refs: s.refs });
     if (!res.ok) {
       out.append(alertBox(res.error));
       return;
     }
     const seen = [...new Set(res.steps.map((x) => x.page))].sort((a, b) => a - b);
+    const sums = prefixTotals(res);
     const body = h("div", { class: "step-body" });
     const strip = h("div", {});
     const totals = h("div", {});
@@ -186,7 +210,7 @@ export function pagingView(engine: Engine): View {
       clear(strip);
       clear(totals);
       strip.append(refStrip(res, i, (j) => tl?.set(j)));
-      totals.append(runningTotals(res, i));
+      totals.append(runningTotals(res, sums, i));
       body.append(
         h(
           "section",

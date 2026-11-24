@@ -136,14 +136,20 @@ static void tlb_remove(Sim *s, int page) {
     }
 }
 
-/* Returns 1 on a TLB hit; on a miss inserts the page (evicting the LRU entry). */
-static int tlb_access(Sim *s, int page, int step) {
+/* Returns 1 on a TLB hit (refreshing its LRU stamp). */
+static int tlb_lookup(Sim *s, int page, int step) {
     for (int i = 0; i < s->tlb_n; i++) {
         if (s->tlb[i].page == page) {
             s->tlb[i].last = step;
             return 1;
         }
     }
+    return 0;
+}
+
+/* Caches a translation after a miss, evicting the LRU entry if full. Called
+ * after the fault is handled, so a victim's entry is already gone. */
+static void tlb_insert(Sim *s, int page, int step) {
     if (s->tlb_n < s->cfg->tlb_entries) {
         s->tlb[s->tlb_n++] = (TlbEntry){page, step};
     } else {
@@ -152,7 +158,6 @@ static int tlb_access(Sim *s, int page, int step) {
             if (s->tlb[i].last < s->tlb[lru].last) lru = i;
         s->tlb[lru] = (TlbEntry){page, step};
     }
-    return 0;
 }
 
 static void emit_frames(const Sim *s, Buf *b) {
@@ -227,7 +232,7 @@ int paging_run(const PagingConfig *cfg, const Ref *refs, size_t n, Buf *out, Tot
         const char *tlb = "off";
         int tlb_hit = 0;
         if (cfg->tlb_entries > 0) {
-            tlb_hit = tlb_access(&s, page, k);
+            tlb_hit = tlb_lookup(&s, page, k);
             tlb = tlb_hit ? "hit" : "miss";
             if (tlb_hit) t->tlb_hits++;
             else t->tlb_misses++;
@@ -277,6 +282,7 @@ int paging_run(const PagingConfig *cfg, const Ref *refs, size_t n, Buf *out, Tot
             s.frames[frame] = (Frame){page, 1, 1, k, k, write};
             where[page] = frame;
         }
+        if (cfg->tlb_entries > 0 && !tlb_hit) tlb_insert(&s, page, k);
 
         if (!out) continue;
         if (i) buf_putc(out, ',');
