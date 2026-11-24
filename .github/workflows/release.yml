@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: CLI ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - { os: ubuntu-latest, name: linux-amd64, cc: gcc, ext: "" }
+          - { os: ubuntu-24.04-arm, name: linux-arm64, cc: gcc, ext: "" }
+          - { os: macos-13, name: darwin-amd64, cc: clang, ext: "" }
+          - { os: macos-latest, name: darwin-arm64, cc: clang, ext: "" }
+          - { os: windows-latest, name: windows-amd64, cc: gcc, ext: ".exe" }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test and build
+        run: make test CC=${{ matrix.cc }} && make CC=${{ matrix.cc }}
+      - name: Package
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          mkdir -p dist
+          cp "archmem${{ matrix.ext }}" "dist/archmem-${version}-${{ matrix.name }}${{ matrix.ext }}"
+          cd dist && for f in *; do (sha256sum "$f" 2>/dev/null || shasum -a 256 "$f") > "$f.sha256"; done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: archmem-${{ matrix.name }}
+          path: dist/*
+
+  publish:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "ArchMEM $GITHUB_REF_NAME" --generate-notes
