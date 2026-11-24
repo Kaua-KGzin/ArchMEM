@@ -165,3 +165,11 @@ h2 { font-size: 1.05rem; margin: 0; }
 .blk.chosen { outline: 3px solid var(--hit); outline-offset: -3px; }
 .cands { margin: 0; padding-left: 1.2rem; font-family: var(--mono); font-size: 0.85rem; }
 .cands li.chosen { color: var(--hit); font-weight: 700; }
+
+.share { margin-left: auto; font-weight: 600; font-size: 0.85rem; }
+.challenge .q { font-size: 1.1rem; font-weight: 700; margin-top: 0; }
+.challenge .refs { font-size: 1rem; word-break: break-word; }
+.challenge .card { display: flex; flex-direction: column; gap: 0.8rem; max-width: 720px; }
+.challenge #c-answer { max-width: 220px; font-size: 1.1rem; }
+.row { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.linkish { background: none; border: none; padding: 0; color: var(--accent); text-decoration: underline; }

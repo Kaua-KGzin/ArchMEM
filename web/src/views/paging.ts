@@ -2,7 +2,7 @@
 import { alertBox, clear, h, pct } from "../dom";
 import type { Engine } from "../engine";
 import { ALG_LABEL, ALG_RULE, explain } from "../i18n";
-import { scenario } from "../state";
+import { hashParam, scenario } from "../state";
 import { timeline, type Timeline } from "../timeline";
 import type { RunResponse, Scenario, Step } from "../types";
 import { scenarioForm } from "./form";
@@ -163,6 +163,8 @@ function runningTotals(r: RunResponse, index: number): HTMLElement {
 export function pagingView(engine: Engine): View {
   const out = h("div", { class: "sim" });
   let tl: Timeline | null = null;
+  // "Ver a resolução" links open at a given step: #/paginacao?s=...&passo=9
+  let startAt = Math.max(1, Number(hashParam(location.hash, "passo")) || 1) - 1;
 
   const simulate = (s: Scenario) => {
     scenario.set(s);
@@ -192,9 +194,10 @@ export function pagingView(engine: Engine): View {
           h("span", { class: `badge ${st.result}` }, st.result === "hit" ? "✓ hit" : "✗ page fault"),
           h("p", {}, explain(st)),
         ),
-        h("div", { class: "panels" }, addressPanel(st, res), tlbPanel(st, res), framesPanel(st, res), pageTablePanel(st, res, seen)),
+        h("div", { class: "panels" }, addressPanel(st, res), tlbPanel(st, res) ?? "", framesPanel(st, res), pageTablePanel(st, res, seen)),
       );
-    });
+    }, startAt);
+    startAt = 0;
     out.append(
       h("p", { class: "rule" }, h("strong", {}, ALG_LABEL[res.config.algorithm] + ": "), ALG_RULE[res.config.algorithm]),
       totals,

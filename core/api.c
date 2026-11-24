@@ -36,6 +36,19 @@ static int get_int(const JVal *obj, const char *key, int *out, char *err) {
     return 0;
 }
 
+/* Seeds are uint32 (0..4294967295). */
+static int get_seed(const JVal *obj, uint32_t *out, char *err) {
+    const JVal *v = json_get(obj, "seed");
+    if (!v) return 0;
+    double d = json_num(v, NAN);
+    if (json_type(v) != J_NUM || d != floor(d) || d < 0 || d > 4294967295.0) {
+        snprintf(err, ERRLEN, "campo \"seed\" deve ser um inteiro entre 0 e 4294967295");
+        return 1;
+    }
+    *out = (uint32_t)d;
+    return 0;
+}
+
 static int get_str(const JVal *obj, const char *key, const char **out, char *err) {
     const JVal *v = json_get(obj, key);
     if (!v) return 0;
@@ -197,9 +210,10 @@ static int do_curve(const JVal *req, Buf *b, char *err) {
 
 static int do_gen(const JVal *req, Buf *b, char *err) {
     const char *kind_s = "uniform";
-    int length = 20, pages = 8, seed = 1;
+    int length = 20, pages = 8;
+    uint32_t seed = 1;
     if (get_str(req, "kind", &kind_s, err) || get_int(req, "length", &length, err) ||
-        get_int(req, "pages", &pages, err) || get_int(req, "seed", &seed, err))
+        get_int(req, "pages", &pages, err) || get_seed(req, &seed, err))
         return 1;
     const JVal *wr = json_get(req, "write_ratio");
     if (wr && json_type(wr) != J_NUM) return snprintf(err, ERRLEN, "campo \"write_ratio\" deve ser numero"), 1;
@@ -208,7 +222,7 @@ static int do_gen(const JVal *req, Buf *b, char *err) {
         return snprintf(err, ERRLEN, "kind \"%.20s\" desconhecido (uniform, locality, loop, sequential)", kind_s), 1;
     Ref *refs = NULL;
     size_t n = 0;
-    if (gen_refs(kind, length, pages, (uint32_t)seed, json_num(wr, 0.0), &refs, &n, err, ERRLEN)) return 1;
+    if (gen_refs(kind, length, pages, seed, json_num(wr, 0.0), &refs, &n, err, ERRLEN)) return 1;
     buf_puts(b, "{\"ok\":true,\"refs\":\"");
     refs_format(refs, n, b);
     buf_puts(b, "\"}");
@@ -237,11 +251,12 @@ static int do_seg(const JVal *req, Buf *b, char *err) {
 }
 
 static int do_challenge(const JVal *req, Buf *b, char *err) {
-    int seed = 1, difficulty = 1;
-    if (get_int(req, "seed", &seed, err) || get_int(req, "difficulty", &difficulty, err)) return 1;
+    uint32_t seed = 1;
+    int difficulty = 1;
+    if (get_seed(req, &seed, err) || get_int(req, "difficulty", &difficulty, err)) return 1;
     Buf body;
     buf_init(&body);
-    if (challenge_make((uint32_t)seed, difficulty, &body, err, ERRLEN)) {
+    if (challenge_make(seed, difficulty, &body, err, ERRLEN)) {
         buf_free(&body);
         return 1;
     }

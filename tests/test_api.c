@@ -114,6 +114,16 @@ static void test_api_gen_and_seg_and_challenge(void) {
     CHECK(ok(v));
     CHECK(json_type(json_get(json_get(v, "challenge"), "answer")) != J_NULL);
     json_free(v);
+    /* seeds are uint32: the web app draws them from the whole range */
+    v = call("{\"action\":\"challenge\",\"seed\":4000000000,\"difficulty\":2}");
+    CHECK(ok(v));
+    json_free(v);
+    v = call("{\"action\":\"gen\",\"seed\":2147483646}");
+    CHECK(ok(v));
+    json_free(v);
+    v = call("{\"action\":\"gen\",\"seed\":4294967296}");
+    CHECK(!ok(v));
+    json_free(v);
     v = call("{\"action\":\"version\"}");
     CHECK_EQ_STR(json_str(json_get(v, "version"), ""), ARCHMEM_VERSION);
     json_free(v);
