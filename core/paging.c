@@ -102,8 +102,25 @@ static int choose_victim(Sim *s, size_t idx, Choice *c) {
         c->next_use = best_next;
         break;
     }
+    case ALG_LFU:
+        for (int f = 1; f < F; f++) {
+            const Frame *a = &s->frames[f], *b = &s->frames[best];
+            if (a->count < b->count || (a->count == b->count && a->loaded < b->loaded)) best = f;
+        }
+        break;
+    case ALG_CLOCK:
+        /* Second chance: clear set bits until a frame with ref=0 comes up.
+         * At most F bits are set, so at most F are cleared. */
+        while (s->frames[s->hand].ref) {
+            s->frames[s->hand].ref = 0;
+            c->cleared[c->n_cleared++] = s->frames[s->hand].page;
+            s->hand = (s->hand + 1) % F;
+        }
+        best = s->hand;
+        s->hand = (s->hand + 1) % F;
+        break;
     default:
-        return -1; /* Clock and LFU arrive in the next task */
+        return -1;
     }
     c->frame = best;
     return 0;
