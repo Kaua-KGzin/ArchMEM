@@ -1,4 +1,4 @@
-﻿# make's built-in default is `cc`, which MinGW does not ship.
+# make's built-in default is `cc`, which MinGW does not ship.
 ifeq ($(origin CC),default)
 CC := gcc
 endif
