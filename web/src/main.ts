@@ -2,7 +2,10 @@ import "./style.css";
 import { alertBox, clear, h } from "./dom";
 import { loadEngine, type Engine } from "./engine";
 import { scenario, scenarioFromHash } from "./state";
+import { compareView } from "./views/compare";
+import { curveView } from "./views/curve";
 import { pagingView } from "./views/paging";
+import { segmentationView } from "./views/segmentation";
 import type { View } from "./views/view";
 
 type Route = { id: string; title: string; render: (engine: Engine) => View };
@@ -13,9 +16,9 @@ const placeholder = (title: string) => (): View => ({
 
 export const ROUTES: Route[] = [
   { id: "paginacao", title: "Paginação", render: pagingView },
-  { id: "comparar", title: "Comparar", render: placeholder("Comparar") },
-  { id: "curva", title: "Curva de faults", render: placeholder("Curva") },
-  { id: "segmentacao", title: "Segmentação", render: placeholder("Segmentação") },
+  { id: "comparar", title: "Comparar", render: compareView },
+  { id: "curva", title: "Curva de faults", render: curveView },
+  { id: "segmentacao", title: "Segmentação", render: segmentationView },
   { id: "desafios", title: "Desafios", render: placeholder("Desafios") },
 ];
 

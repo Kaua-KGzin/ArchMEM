@@ -137,3 +137,31 @@ details.gen[open] { display: flex; flex-direction: column; gap: 0.5rem; }
 .pt tr.current td { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+h2 { font-size: 1.05rem; margin: 0; }
+.card h3 { margin: 0 0 0.6rem; font-size: 0.9rem; }
+.rank { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.rank th, .rank td { padding: 0.55rem 0.7rem; border-bottom: 1px solid var(--border); text-align: left; }
+.rank thead th { color: var(--muted); font-size: 0.8rem; font-weight: 600; }
+.rank .num { text-align: right; font-variant-numeric: tabular-nums; font-family: var(--mono); }
+.rank tr.best th::after { content: " ★ menor"; color: var(--hit); font-size: 0.75rem; }
+.barcell { width: 30%; }
+.bar { display: block; height: 0.6rem; border-radius: 999px; background: var(--arch-gradient); }
+
+.chart-card { padding: 0.5rem; }
+.chart { width: 100%; height: auto; }
+.chart .grid { stroke: var(--border); }
+.chart .tick, .chart .legend-label { fill: var(--muted); font-size: 12px; }
+.chart .axis { fill: var(--muted); font-size: 12px; font-weight: 600; }
+.chart .marker-label { fill: var(--fault); font-size: 12px; font-weight: 700; }
+.note { border-left: 4px solid var(--fault); }
+
+.membar { display: flex; height: 3.2rem; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); }
+.blk { min-width: 3px; display: flex; align-items: center; justify-content: center; font-family: var(--mono); font-size: 0.8rem; border-right: 1px solid var(--bg); }
+.blk span { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.blk small { font-size: 0.65rem; opacity: 0.8; }
+.blk.used { background: color-mix(in srgb, var(--accent) 55%, var(--surface)); color: #fff; }
+.blk.hole { background: repeating-linear-gradient(45deg, var(--surface-2), var(--surface-2) 6px, var(--surface) 6px, var(--surface) 12px); color: var(--muted); }
+.blk.chosen { outline: 3px solid var(--hit); outline-offset: -3px; }
+.cands { margin: 0; padding-left: 1.2rem; font-family: var(--mono); font-size: 0.85rem; }
+.cands li.chosen { color: var(--hit); font-weight: 700; }
