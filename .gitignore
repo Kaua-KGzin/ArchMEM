@@ -1,6 +1,4 @@
 ﻿# Build artifacts
-memory_sim
-memory_sim.exe
 *.o
 *.obj
 *.out
@@ -18,3 +16,12 @@ memory_sim.exe
 .vscode/
 *.user
 *.suo
+.superpowers/
+
+# ArchMEM 2
+archmem
+archmem.exe
+build/
+web/node_modules/
+web/dist/
+web/public/wasm/

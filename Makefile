@@ -1,50 +1,78 @@
-﻿CC ?= gcc
+﻿# make's built-in default is `cc`, which MinGW does not ship.
+ifeq ($(origin CC),default)
+CC := gcc
+endif
+EMCC ?= emcc
 
 ifeq ($(OS),Windows_NT)
 EXE := .exe
-RUN_PREFIX :=
 else
 EXE :=
-RUN_PREFIX := ./
 endif
 
-TARGET ?= memory_sim$(EXE)
-SRC := memory_sim.c
-OBJ := $(SRC:.c=.o)
-
 CSTD := -std=c11
-WARN := -Wall -Wextra -Wpedantic
+WARN := -Wall -Wextra -Wpedantic -Werror
 OPT ?= -O2
 CFLAGS ?= $(CSTD) $(WARN) $(OPT)
-LDFLAGS ?=
+LDLIBS := -lm
 
-.PHONY: all run debug sanitize clean help
+BUILD := build
+CLI := archmem$(EXE)
+CORE_ALL := $(wildcard core/*.c)
+# The oracle is a deliberately naive second implementation used only by tests.
+CORE := $(filter-out core/oracle.c,$(CORE_ALL))
+HEADERS := $(wildcard core/*.h)
+TESTS := $(patsubst tests/%.c,$(BUILD)/%$(EXE),$(wildcard tests/test_*.c))
+SAN_TESTS := $(patsubst tests/%.c,$(BUILD)/san/%$(EXE),$(wildcard tests/test_*.c))
 
-all: $(TARGET)
+WASM_OUT := web/public/wasm/archmem.js
+WASM_FLAGS := -O2 -sMODULARIZE=1 -sEXPORT_ES6=1 -sEXPORT_NAME=createArchMEM \
+	-sENVIRONMENT=web,node -sALLOW_MEMORY_GROWTH=1 \
+	-sEXPORTED_FUNCTIONS=_archmem_run,_archmem_free,_malloc,_free \
+	-sEXPORTED_RUNTIME_METHODS=UTF8ToString,stringToNewUTF8
 
-$(TARGET): $(OBJ)
-	$(CC) $(OBJ) -o $@ $(LDFLAGS)
+.PHONY: all test sanitize cli-test wasm clean help
 
-%.o: %.c
-	$(CC) $(CFLAGS) -c $< -o $@
+all: $(CLI)
 
-run: $(TARGET)
-	$(RUN_PREFIX)$(TARGET)
+$(CLI): cli/main.c $(CORE) $(HEADERS)
+	$(CC) $(CFLAGS) cli/main.c $(CORE) -o $@ $(LDLIBS)
 
-debug: CFLAGS := $(CSTD) $(WARN) -O0 -g3 -DDEBUG
-debug: clean $(TARGET)
+$(BUILD) $(BUILD)/san:
+	mkdir -p $@
 
-sanitize: CFLAGS := $(CSTD) $(WARN) -O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer
-sanitize: LDFLAGS := -fsanitize=address,undefined
-sanitize: clean $(TARGET)
+$(BUILD)/%$(EXE): tests/%.c $(CORE_ALL) $(HEADERS) tests/test.h | $(BUILD)
+	$(CC) $(CFLAGS) $< $(CORE_ALL) -o $@ $(LDLIBS)
+
+test: $(TESTS)
+	@for t in $(TESTS); do printf '%-32s ' "$$t"; ./$$t || exit 1; done
+
+# ASan/UBSan are not available with MinGW; on Windows this target says so.
+$(BUILD)/san/%$(EXE): tests/%.c $(CORE_ALL) $(HEADERS) tests/test.h | $(BUILD)/san
+	$(CC) $(CSTD) $(WARN) -O1 -g -fsanitize=address,undefined -fno-omit-frame-pointer $< $(CORE_ALL) -o $@ $(LDLIBS)
+
+ifeq ($(OS),Windows_NT)
+sanitize:
+	@echo "sanitize: ASan/UBSan nao existem no MinGW; rode no Linux/macOS (o CI roda)."
+else
+sanitize: $(SAN_TESTS)
+	@for t in $(SAN_TESTS); do printf '%-36s ' "$$t"; ./$$t || exit 1; done
+endif
+
+cli-test: $(CLI)
+	sh tests/cli_test.sh ./$(CLI)
+
+wasm: $(CORE) $(HEADERS)
+	mkdir -p web/public/wasm
+	$(EMCC) $(CSTD) $(WARN) $(CORE) $(WASM_FLAGS) -o $(WASM_OUT)
 
 clean:
-	$(RM) $(TARGET) $(OBJ)
+	rm -rf $(BUILD) $(CLI) web/public/wasm
 
 help:
-	@echo "Available targets:"
-	@echo "  make            Build release binary"
-	@echo "  make run        Build and run"
-	@echo "  make debug      Build with debug symbols"
-	@echo "  make sanitize   Build with ASan/UBSan"
-	@echo "  make clean      Remove build artifacts"
+	@echo "make            CLI archmem"
+	@echo "make test       testes do core"
+	@echo "make sanitize   testes com ASan/UBSan (Linux/macOS)"
+	@echo "make cli-test   testes da CLI"
+	@echo "make wasm       motor em WebAssembly para a web (precisa do emcc)"
+	@echo "make clean      remove artefatos"
