@@ -1,0 +1,1 @@
+{"action":"seg","memory_size":1000,"fit":"best","ops":"alloc A 100; alloc B 200; alloc C 100; alloc D 400; alloc F 100; free B; free D; alloc E 50; alloc G 500"}

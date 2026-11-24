@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  core:
+    name: Core (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - name: Tests
+        run: make test CC=${{ runner.os == 'macOS' && 'clang' || 'gcc' }}
+      - name: CLI tests
+        run: make cli-test CC=${{ runner.os == 'macOS' && 'clang' || 'gcc' }}
+      - name: Sanitizers (ASan + UBSan)
+        if: runner.os == 'Linux'
+        run: make sanitize
+
+  web:
+    name: WebAssembly + web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: CLI (for parity)
+        run: make
+      - name: Parity of the committed WebAssembly build
+        run: node tests/parity.mjs
+      - name: Rebuild WebAssembly and check parity again
+        run: make wasm && node tests/parity.mjs
+      - name: Web tests and build
+        working-directory: web
+        run: npm ci && npm test && npm run build

@@ -1,0 +1,31 @@
+# arch-deploy: https://github.com/Kaua-KGzin/arch-deploy
+# Produção também sai sozinha pelo Git da Vercel a cada push na main (root: web).
+# Estes targets servem para deploy manual com a CLI da Vercel (vercel login).
+project: archmem
+
+targets:
+  production:
+    provider: vercel
+    dir: web
+    confirm: true
+    before:
+      - make -C .. wasm
+      - npm ci
+      - npm test
+      - npm run build
+    healthcheck:
+      url: https://archmem.vercel.app/health
+  preview:
+    provider: vercel
+    dir: web
+    prod: false
+    before:
+      - npm ci
+      - npm run build
+  cli-release:
+    provider: github-release
+    confirm: true
+    before:
+      - make test
+      - make
+    assets: ["archmem{{exe}}"]

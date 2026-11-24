@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "rewrites": [{ "source": "/health", "destination": "/health.json" }],
+  "headers": [
+    { "source": "/health.json", "headers": [{ "key": "Cache-Control", "value": "no-store" }] },
+    { "source": "/wasm/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] }
+  ]
+}

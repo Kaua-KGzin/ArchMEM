@@ -1,0 +1,1 @@
+{"action":"run","config":{"page_size":256,"frames":4,"virtual_pages":32,"tlb_entries":2,"algorithm":"lru"},"refs":"@0 @300w @513 5w 5 @0x200 7 9w 1 @300 12 5"}

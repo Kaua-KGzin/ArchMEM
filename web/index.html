@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ArchMEM · laboratório de memória virtual</title>
+    <meta
+      name="description"
+      content="Laboratório de memória virtual para estudar Sistemas Operacionais: paginação, TLB, FIFO, LRU, Clock, LFU e OPT, anomalia de Belady e segmentação, passo a passo."
+    />
+    <meta name="theme-color" content="#0f1117" />
+    <link rel="icon" href="/brand/arch-mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/brand/arch-line.css" />
+  </head>
+  <body>
+    <a class="skip" href="#view">Pular para o conteúdo</a>
+    <header class="top">
+      <a class="brand" href="#/paginacao">
+        <img src="/brand/arch-mark.svg" alt="" width="32" height="32" />
+        <span><strong>ArchMEM</strong><small>laboratório de memória virtual</small></span>
+      </a>
+      <nav id="tabs" class="tabs" aria-label="Seções"></nav>
+      <button id="share" type="button" class="share">Compartilhar</button>
+    </header>
+    <main id="view" tabindex="-1"><p class="muted">Carregando o motor…</p></main>
+    <footer class="foot">
+      <span>Motor em C compilado para WebAssembly — o mesmo da CLI <code>archmem</code>.</span>
+      <a class="arch-signature" href="https://archsys.vercel.app" target="_blank" rel="noopener">
+        <img src="/brand/arch-mark.svg" alt="" /> Parte da linha Arch
+      </a>
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

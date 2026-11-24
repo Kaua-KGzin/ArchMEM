@@ -1,0 +1,1 @@
+{"action":"curve","config":{},"algorithms":["fifo","lru","opt"],"max_frames":6,"refs":"1 2 3 4 1 2 5 1 2 3 4 5"}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/Kaua-KGzin/System-Arch/main/docs/arch-line.schema.json",
+  "line": "arch",
+  "protocol": 1,
+  "id": "archmem",
+  "name": "ArchMEM",
+  "role": "insight",
+  "description": "Laboratório de memória virtual: paginação, TLB, FIFO/LRU/Clock/LFU/OPT, Belady e segmentação, passo a passo — web (WebAssembly) e CLI",
+  "repository": "https://github.com/Kaua-KGzin/ArchMEM",
+  "stack": ["c", "webassembly", "typescript"],
+  "runtime": "static",
+  "health": "/health",
+  "connectsTo": []
+}
